@@ -56,4 +56,19 @@ Once the explanations are obtained, we can compute the explanation accuracy in c
 ### Plot explanations
 Finally, by running the next command, we can generate and save the images of the explanations learned by our method.
  - `python 3_plot_explanations.py --dataset={} --model={} --connected={} --ratio={}`
+ 
+ 
+## Reference
+
+```bibtex
+
+@article{serra2022l2xgnn,
+  title={Learning to Explain Graph Neural Networks},
+  author={Serra, Giuseppe and Niepert, Mathias},
+  journal={arXiv preprint},
+  year={2022}
+}
+
+```
+
 
