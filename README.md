@@ -1,62 +1,59 @@
-# XPLGNN﻿: Self-Explainable Graph Neural Networks
-
-This repository contains code for the paper "*An Interpretable Alternative to Neural Representation Learning for Rating Prediction - Transparent Latent Class Modeling of User Reviews*".
-
-For each product category, the code contains all the necessary steps to reproduce the experiments. The scripts are implemented with Python 3.7, and have been tested with Windows OS.
-
-After data preparation, our software comprises three major parts:
-1. EM training with topographic organization of latent classes.
-2. Rating prediction part.
-3. Evaluation of the results through both quantitative and qualitative experiments.
-
-### Data sets
-In the repository we uploaded a zipped folder (`preprocessed_data.zip`) containing all the necessary data for running the experiments. The folder is organized in subfolders divided per category. The raw reviews, instead, are publicly available [here](https://jmcauley.ucsd.edu/data/amazon/). Please note that we use the 5-core version of these data sets.
+# L2XGNN: Learning to Explain Graph Neural Networks
+The repository contains the code to reproduce the results of our paper. The source code consists of two folders:
+- `benchmark_gc` to reproduce the experiments related to graph classification tasks.
+- `xai_evaluation` to run, train and evaluate L2XGNN in comparison with common XAI post-hoc techniques.
 
 ### Requirements
- - `tensorflow==2.3.0` or `tensorflow-gpu==2.3.0`
+The scripts are implemented with Python 3.9, and tested with Linux OS.
+ - `pyg==2.0.3` 
+ - `pytorch==1.10.1`
+ - `networkx==2.6.3`
  - `numpy==1.21.2`
+ - `dive-into-graphs==0.2.0`
  - `scikit-learn==1.0.2`
- - `minisom==2.2.9`
- - `matplotlib==3.5.0`
- - `seaborn=0.11.2` 
+ - `matplotlib=3.5.1` 
 
-### Utils
-The python file `utils.py` contains file paths and hyperparameters needed to run all the scripts. The list of data sets to evaluate can be changed in this file.
+## Graph Classification 
+The folder `benchmark_gc` contains the evaluation script for various methods on [common benchmark datasets](http://graphkernels.cs.tu-dortmund.de) via 10-fold cross validation, where a training fold is randomly sampled to serve as a validation set. We slightly modify the [evaluation protocol](https://github.com/pyg-team/pytorch_geometric/tree/master/benchmark/kernel) to work for our case.
 
-### Data preprocessing
-Before training, some data preparation is needed to run the experiments. This includes creating and saving data structures that will be used during the EM step to speed up the computational time. First, run the following command:
- - `python build_dataset.py`
+### Base model hyperparameter selection
+Before training L2XGNN, we need to find the best configuration for each base models considered (i.e., GCN and GIN). Hyperparameter selection is performed for the number of hidden units [16, 32, 64, 128] and the number of layers [1, 2, 3, 4] with respect to the validation set. First, run the following command:
+ - `python 1_backbone_selection.py`
 
-### EM Training
-Once we prepared the data, we can run the EM algorithm. To train it, run the following command:
- - `python EM_training.py -K={} -L={}`
-
-where K and L represent the number of user and product classes (default values are 25 and 16 respectively).
-
-### Rating Prediction Part
-First, run the following script.
- - `python input_preparation_rating.py -K={} -L={}`
-
-After running the EM algorithm we have all the probability assignments of users and products to their respective latent classes. Given the imposed topological organization, we can think of these quantities as images where each pixel represents a latent class and the corresponding value is the latent class probability assignment. This script is used to create the correct input for the architecture. Below, an example of the input transformation. 
-
-<img src="https://github.com/GiuseppeSerra93/TLCM/blob/main/images/fig1.png" height="200">
+### L2XGNN hyperparameter selection and evaluation
+Once the hyperparameters of the default models are found, we select the best ratio R from the set of values [0.4,  0.5,  0.6,  0.7]  based on the validation accuracy.
+ - `python 2_ratio_selection.py --connected={}`
+       - `connected`: parameter to decide between connected and disconnected subgraphs (default value `True`).
  
-Now, we can run the architecture using the following command:
- - `python run_CNN_architecture.py -epochs={} -bs={} -lr={} -gpu={} -K={} -L={} -runs={}`
-     - `epochs`: number of epochs (default value 200)
-     - `bs`: batch size (default value 256)
-     - `lr`: learning rate (default value 0.05)
-     - `gpu`: GPU device ID (integer)
-     - `K`: number of user latent classes (default value 25)
-     - `L`: number of product latent classes (default value 16)
-     - `runs`: number of runs for each category (default value 5)
+Finally, we can select the perturbation intensity `lambda_` from the list of values [10, 100, 1000]. This parameter can be manually changed in the following file `l2xgnn/graph_imle.py`. Below, the corresponding code snippet for the connected strategy:
+```
+class GraphIMLETopKConnected(torch.autograd.Function):
+    tau: float = 1.0
+    lambda_: float = 10.0    # choose from [10.0, 100.0, 1000.0]
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+```
+Once the perturbation intensity is decided, we can run the following command:
+ - `python 3_main.py --connected={}`
 
-### Results evaluation
-To visualize and evaluate the results using the output of our experiments, we provided a Jupyter notebook file `results_visualization.ipynb`. This file contains all the instructions to reproduce and to manually explore the results contained in the paper.
+## Explanation Evaluation
+The folder `xai_evaluation` contains the scripts to train, evaluate and plot the explanations obtained with our XAI method on a 3-layer GIN architecture.
 
-<p float="left">
-  <img src="https://github.com/GiuseppeSerra93/TLCM/blob/main/images/map_products.png" width="28%" />
-  <img src="https://github.com/GiuseppeSerra93/TLCM/blob/main/images/map_users.png" width="29%" /> 
-  <img src="https://github.com/GiuseppeSerra93/TLCM/blob/main/images/generative_extension.png" width="33%" />
-</p>
+### Datasets
+The folder `datasets` contains the raw data used for our experiments: `ba_2motifs` and `Mutagenicity (MUTAG_0)`. The first one can be directly obtained using commands from common [libraries](https://diveintographs.readthedocs.io/en/latest/xgraph/dataset.html#dig.xgraph.dataset.SynGraphDataset). The latter was manually downloaded from [this](https://github.com/chrisjtan/gnn_cff/tree/main/datasets/Mutagenicity_0) repository.
+Before training L2XGNN, we need to preprocess the `MUTAG_0` dataset using the following command:
+ - `python 0_preprocess_Mutagenicity_data`
+
+### Train L2XGNN
+To train L2XGNN on a 3-layer GIN architecture (as in the paper), use the following command:
+ - `python 1_l2xgnn_train.py --dataset={} --model={} --connected={} --ratio={}`
+	 - `dataset`: choose between `ba_2motifs` and `Mutagenicity`.
+	 - `model`: this parameter can be used to choose whether we want to explain a GIN or a GCN architecture. You can choose between `L2XGIN` and `L2XGCN` respectively (default `L2XGIN`).
+	 - `connected`: parameter to decide between connected and disconnected subgraphs (default value `True`).
+	 - `ratio`: ratio of restrained edges (float between 0.1 and 0.9).
+### Evaluate L2XGNN
+Once the explanations are obtained, we can compute the explanation accuracy in comparison with the available ground-truth motifs:
+ - `python 2_l2xgnn_evaluate.py --dataset={} --model={} --connected={} --ratio={}`
+### Plot explanations
+Finally, by running the next command, we can generate and save the images of the explanations learned by our method.
+ - `python 3_plot_explanations.py --dataset={} --model={} --connected={} --ratio={}`
 
