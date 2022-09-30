@@ -1,5 +1,5 @@
 # L2XGNN: Learning to Explain Graph Neural Networks
-The repository contains the code to reproduce the results of our paper. The source code consists of two folders:
+The repository contains the code to reproduce the results of our [paper](https://arxiv.org/abs/2209.14402). The source code consists of two folders:
 - `benchmark_gc` to reproduce the experiments related to graph classification tasks.
 - `xai_evaluation` to run, train and evaluate L2XGNN in comparison with common XAI post-hoc techniques.
 
