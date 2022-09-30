@@ -65,7 +65,7 @@ Finally, by running the next command, we can generate and save the images of the
 @article{serra2022l2xgnn,
   title={Learning to Explain Graph Neural Networks},
   author={Serra, Giuseppe and Niepert, Mathias},
-  journal={arXiv preprint},
+  journal={arXiv preprint arXiv:2209.14402},
   year={2022}
 }
 
