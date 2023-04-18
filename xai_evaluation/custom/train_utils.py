@@ -3,14 +3,15 @@
 import os
 import pickle
 import torch
+import time
 import numpy as np
 from torch_geometric.utils import degree
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def save_best_model(model, optimizer, epoch, loss, model_name, dataset_name,
-                    ratio_str=None, connected_str=None):
-    dir_output = f'./saved_models/{dataset_name}'
+                    n_split, ratio_str=None, connected_str=None):
+    dir_output = f'./saved_models/{dataset_name}/s{n_split}'
     if not os.path.exists(dir_output):
         os.makedirs(dir_output)
     if ratio_str is not None:
@@ -63,11 +64,11 @@ def validation(model, loader, ratio):
     return accuracy
 
 def training_proc(model, optimizer, train_loader, val_loader, test_loader, ratio, 
-                  model_name, dataset_name, num_epochs, connected_str):
+                  model_name, dataset_name, n_split, num_epochs, connected_str):
     ratio_str = str(ratio).replace('.', '')
     best_val_acc = 0.0
     best_loss = 100.0
-    patience = num_epochs
+    patience = 50
     patience_counter = 0
     
     for epoch in range(1, num_epochs + 1):
@@ -82,7 +83,7 @@ def training_proc(model, optimizer, train_loader, val_loader, test_loader, ratio
             test_acc = validation(model, test_loader, ratio)
             print(f'Epoch: {epoch:03d} - Val Acc: {best_val_acc:.4f} - Test Acc: {test_acc:.4f}')
             save_best_model(model, optimizer, epoch, loss, model_name, 
-                            dataset_name, ratio_str, connected_str)
+                            dataset_name, n_split, ratio_str, connected_str)
 
         elif val_acc == best_val_acc:
             if loss < best_loss:
@@ -92,7 +93,7 @@ def training_proc(model, optimizer, train_loader, val_loader, test_loader, ratio
                 test_acc = validation(model, test_loader, ratio)
                 print(f'Epoch: {epoch:03d} - Val Acc: {best_val_acc:.4f} - Test Acc: {test_acc:.4f}')
                 save_best_model(model, optimizer, epoch, loss, model_name, 
-                                dataset_name, ratio_str, connected_str)
+                                dataset_name, n_split, ratio_str, connected_str)
 
             else:
                 patience_counter += 1
@@ -115,10 +116,14 @@ def test(model, loader, ratio):
     sections_out = np.array([], dtype=int)
     y_pred_out = np.array([])
     y_out = np.array([])
+    exec_time = 0
     
     for data in loader: 
         data.to(device)
+        start = time.monotonic()
         out, edge_mask, sections = model(data, ratio, train_phase=False)
+        end = time.monotonic()
+        exec_time += (end-start)    
         y_pred = out.argmax(-1)
         y_true = data.y
         total_correct += int((y_pred == y_true).sum())
@@ -128,6 +133,7 @@ def test(model, loader, ratio):
         y_out = np.append(y_out, y_true.cpu())
         
     accuracy = total_correct / len(loader.dataset)
+    print(f'L2XGNN Execution Time: {round(exec_time, 2)}') 
     return accuracy, torch.tensor(edge_mask_out), sections_out, y_pred_out, y_out
     
 def save_test_results(dir_results, y_true, y_pred, edge_mask, sections):

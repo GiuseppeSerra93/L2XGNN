@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os
+import os, json
 import torch
 import argparse
 from gin import L2XGIN
 from gcn import L2XGCN
 from torch_geometric.loader import DataLoader
-from custom.utils import load_dataset, create_splits, load_data_splits, parse_boolean
+from custom.utils import load_dataset, create_split_idx, parse_boolean
 from custom.train_utils import training_proc, test, save_test_results, save_test_plotutils
 
 parser = argparse.ArgumentParser()
@@ -16,10 +16,12 @@ parser.add_argument('--dataset', type=str,
 parser.add_argument('--model', type=str,
                     choices=['L2XGIN', 'L2XGCN'], default='L2XGIN',
                     help='Name of the model')
-parser.add_argument('--connected', type=parse_boolean, default=True, 
+parser.add_argument('--connected', type=parse_boolean, default=False, 
                     help='Get connected output or not')
 parser.add_argument('--ratio', type=float,
                     help='Ratio of restrained edges')
+parser.add_argument('--split', type=int, default=0,
+                    help='Fold to evaluate {0-4}')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 dir_data = './datasets/'
@@ -29,22 +31,31 @@ name_dataset = args.dataset
 name_model = args.model
 connected_flag = args.connected
 ratio = args.ratio
+split = args.split
+
 if connected_flag:
     connected_str = 'connected'
 else:
     connected_str = 'disconnected'
 
-split = 2
 ratio_str = str(ratio).replace('.', '')
 bs = 64 	
 
-dir_splits = f'{dir_data}splits/{name_dataset}/'
-if not os.path.exists(dir_splits):
-	dataset, num_features, num_classes = load_dataset(name_dataset, dir_data)
-	create_splits(dataset, name_dataset, num_features, num_classes)
+dataset, num_features, num_classes = load_dataset(name_dataset, dir_data)
 
-train_data, test_data, val_data, num_features, num_classes = \
-    load_data_splits(name_dataset, dir_data, split)
+dir_split = f'{dir_data}/data_splits/'
+if not os.path.exists(dir_split):
+    os.makedirs(dir_split)
+    create_split_idx(dataset, name_dataset)
+
+splits = json.load(open(dir_split + f'{name_dataset}_splits.json', 'r'))
+test_index = splits[split]['test']
+train_index = splits[split]['model_selection'][0]['train']
+val_index = splits[split]['model_selection'][0]['validation']
+
+train_data = [dataset[idx] for idx in train_index]
+test_data = [dataset[idx] for idx in test_index]
+val_data = [dataset[idx] for idx in val_index]
 
 if name_model == 'L2XGIN':
     num_epochs = 200
@@ -67,9 +78,9 @@ test_loader = DataLoader(test_data, batch_size=bs)
 
 print(f'{name_dataset} - {name_model} - Ratio: {ratio} - Split {split}')
 _, best_val_acc = training_proc(model, optimizer, train_loader, val_loader, test_loader,
-                                ratio, name_model, name_dataset, num_epochs, connected_str)
+                                ratio, name_model, name_dataset, split, num_epochs, connected_str)
 
-best_model_cp = torch.load(f'./saved_models/{name_dataset}/best_{connected_str}_{name_model}{ratio_str}.pth')
+best_model_cp = torch.load(f'./saved_models/{name_dataset}/s{split}/best_{connected_str}_{name_model}{ratio_str}.pth')
 best_model_epoch = best_model_cp['epoch']
 print(best_model_epoch)
 model.load_state_dict(best_model_cp['model_state_dict'])
@@ -79,7 +90,7 @@ test_acc, test_edge_mask, test_sections, \
     
 print(f'Epoch: {best_model_epoch:03d}, Test Acc: {test_acc:.4f}')
 
-dir_results = f'./results/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/' 
+dir_results = f'./results/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/s{split}/' 
 save_test_results(dir_results, y_true_test, y_pred_test, 
                   test_edge_mask, test_sections)
 save_test_plotutils(dir_results, test_loader)

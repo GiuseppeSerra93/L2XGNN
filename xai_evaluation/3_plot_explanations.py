@@ -19,13 +19,16 @@ parser.add_argument('--connected', type=parse_boolean, default=True,
                     help='Get connected output or not')
 parser.add_argument('--ratio', type=float,
                     help='Ratio of restrained edges')
+parser.add_argument('--split', type=int, default=0,
+                    help='Fold to evaluate {0-4}')
+
                     
 args = parser.parse_args()
 name_dataset = args.dataset
 name_model = args.model
 connected_flag = args.connected
 ratio = args.ratio
-
+split = args.split
 
 ratio_str = str(ratio).replace('.', '')
 if connected_flag:
@@ -33,8 +36,8 @@ if connected_flag:
 else:
     connected_str = 'disconnected'
 
-dir_results = f'./results/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/'
-dir_plot = f'./explanation_plots/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/' 
+dir_results = f'./results/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/s{split}/' 
+dir_plot = f'./explanation_plots/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/s{split}/' 
 if not os.path.exists(dir_plot):
     os.makedirs(dir_plot)
 

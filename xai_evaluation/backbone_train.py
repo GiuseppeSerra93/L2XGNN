@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os
+import os, json
 import argparse
 import torch
 import torch.nn.functional as F
 from torch_geometric.loader import DataLoader
 from dig.xgraph.models import GIN_3l
-from custom.utils import load_data_splits
+from custom.utils import load_dataset, create_split_idx
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -44,8 +44,9 @@ def eval_acc(model, loader):
     accuracy = correct / len(loader.dataset)
     return accuracy
 
-def save_best_model(model, optimizer, epoch, loss, model_name, dataset_name):
-    dir_output = f'./saved_models/{dataset_name}'
+def save_best_model(model, optimizer, epoch, loss, model_name,
+                    dataset_name, n_split):
+    dir_output = f'./saved_models/{dataset_name}/s{n_split}'
     if not os.path.exists(dir_output):
         os.makedirs(dir_output)
 	
@@ -62,14 +63,34 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str,
                     choices=['ba_2motifs', 'Mutagenicity'],
                     help='Name of the dataset')
+parser.add_argument('--split', type=int, default=0,
+                    help='Fold to evaluate {0-4}')
+args = parser.parse_args()
 name_dataset = args.dataset
+split = args.split
 
 dir_data = './datasets/'
 name_model = 'GIN_3l'
-split = 2
 num_epochs = 200
 bs = 64
-train_data, test_data, val_data, num_features, num_classes = load_data_splits(name_dataset, dir_data, split)
+
+dataset, num_features, num_classes = load_dataset(name_dataset, dir_data)
+
+dir_split = f'{dir_data}/data_splits/'
+if not os.path.exists(dir_split):
+    os.makedirs(dir_split)
+    create_split_idx(dataset, name_dataset)
+
+splits = json.load(open(dir_split + f'{name_dataset}_splits.json', 'r'))
+test_index = splits[split]['test']
+train_index = splits[split]['model_selection'][0]['train']
+val_index = splits[split]['model_selection'][0]['validation']
+
+train_data = [dataset[idx] for idx in train_index]
+test_data = [dataset[idx] for idx in test_index]
+val_data = [dataset[idx] for idx in val_index]
+
+
 model = GIN_3l('graph', num_features, 64, num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001) 
 train_loader = DataLoader(train_data, batch_size=bs, shuffle=True)
@@ -89,7 +110,8 @@ for epoch in range(1, num_epochs + 1):
         test_acc = eval_acc(model, test_loader)
         best_loss = loss
         print(f'Epoch: {epoch:03d} - Val Acc: {best_val_acc:.4f} - Test Acc: {test_acc:.4f}')
-        save_best_model(model, optimizer, epoch, loss, name_model, name_dataset)
+        save_best_model(model, optimizer, epoch, loss, name_model,
+                        name_dataset, split)
 
     elif val_acc == best_val_acc:
         if loss < best_loss:
@@ -97,4 +119,5 @@ for epoch in range(1, num_epochs + 1):
             test_acc = eval_acc(model, test_loader)
             best_loss = loss
             print(f'Epoch: {epoch:03d} - Val Acc: {best_val_acc:.4f} - Test Acc: {test_acc:.4f}')
-            save_best_model(model, optimizer, epoch, loss, name_model, name_dataset)
+            save_best_model(model, optimizer, epoch, loss, name_model,
+                            name_dataset, split)

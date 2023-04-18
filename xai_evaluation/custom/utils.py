@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import torch
-import os, pickle
-import numpy as np
+import pickle, json
 from torch_geometric.data import Data
 from torch_geometric.datasets import TUDataset
 from torch_geometric.utils import remove_self_loops
 from dig.xgraph.dataset import SynGraphDataset, MoleculeDataset
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 
 def parse_boolean(value):
     value = value.lower()
@@ -63,67 +62,34 @@ def load_dataset(name_dataset, dir_data):
     return dataset, num_features, num_classes
 
 
-def create_splits(dataset, name_dataset, num_features, num_classes):
+def create_split_idx(dataset, name_dataset):
     dir_data = './datasets/'
-    dir_split = f'{dir_data}splits/{name_dataset}/'
-    if not os.path.exists(dir_split):
-        os.makedirs(dir_split)
-    
-    skf = StratifiedKFold(n_splits=5, random_state=193, shuffle=True)
+    dir_split = f'{dir_data}/data_splits/'
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=193)
     y = [data.y[0] for data in dataset]
     
-    i = 0
-    for train_index, test_index in skf.split(dataset, y):
-        train_data = [dataset[train_idx] for train_idx in train_index]
-        test_val_data = [dataset[test_idx] for test_idx in test_index]
-        y_test_val_data = [y[test_idx] for test_idx in test_index]
+    splits = []
+    for train_index, test_val_index in skf.split(dataset, y):
+        dict_split = {}
+        y_test_val_data = [y[idx] for idx in test_val_index]
         
-        test_data, val_data = train_test_split(test_val_data, 
-                                               stratify=y_test_val_data,
-                                               test_size=0.5,
-                                               random_state=123)
+        sss = StratifiedShuffleSplit(n_splits=1, 
+                                     test_size=0.5,
+                                     random_state=123)
         
-        print(len(train_data), len(test_data), len(val_data))
+        for test_idx, val_idx in sss.split(test_val_index, y_test_val_data):
+            test_index = [int(test_val_index[idx]) for idx in test_idx]
+            val_index = [int(test_val_index[idx]) for idx in val_idx]
             
-        out_filename = dir_split + f'train_{i}.pkl'
-        with open(out_filename, 'wb') as outfile:
-            pickle.dump(train_data, outfile)
-            outfile.close() 
+            print(len(train_index), len(test_index), len(val_index))
+            dict_split['test'] = test_index
+            dict_split['model_selection'] = [{'train':train_index.tolist(), 
+                                              'validation':val_index}]
             
-        out_filename = dir_split + f'test_{i}.pkl'
-        with open(out_filename, 'wb') as outfile:
-            pickle.dump(test_data, outfile)
-            outfile.close()
-            
-        out_filename = dir_split + f'validation_{i}.pkl'
-        with open(out_filename, 'wb') as outfile:
-            pickle.dump(val_data, outfile)
-            outfile.close() 
+        splits.append(dict_split)
         
-        i += 1
-            
-    out_filename = dir_split + 'num_features.pkl'
-    with open(out_filename, 'wb') as outfile:
-        pickle.dump(num_features, outfile)
-        outfile.close()
-    out_filename = dir_split + 'num_classes.pkl'
-    with open(out_filename, 'wb') as outfile:
-        pickle.dump(num_classes, outfile)
-        outfile.close()
-        
-def save_data_splits(name_dataset):
-    dir_data = './datasets/'
-    dataset, num_features, num_classes = load_dataset(name_dataset, dir_data)
-    create_splits(dataset, name_dataset, num_features, num_classes)
-                
-                
-def load_data_splits(name_dataset, dir_data, i):
-    dir_split = f'{dir_data}splits/{name_dataset}/'
-    train_data = pickle.load(open(dir_split + f'train_{i}.pkl', 'rb'))
-    test_data = pickle.load(open(dir_split + f'test_{i}.pkl', 'rb'))
-    val_data = pickle.load(open(dir_split + f'validation_{i}.pkl', 'rb'))
-    num_features = pickle.load(open(dir_split + 'num_features.pkl', 'rb'))
-    num_classes = pickle.load(open(dir_split + 'num_classes.pkl', 'rb'))
-    
-    return train_data, test_data, val_data, num_features, num_classes
+    out_filename = dir_split + f'{name_dataset}_splits.json'
+    with open(out_filename, 'w') as outfile:
+        json.dump(splits, outfile)
+        outfile.close()   
 
