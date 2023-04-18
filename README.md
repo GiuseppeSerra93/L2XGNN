@@ -45,17 +45,18 @@ Before training L2XGNN, we need to preprocess the `MUTAG_0` dataset using the fo
 
 ### Train L2XGNN
 To train L2XGNN on a 3-layer GIN architecture (as in the paper), use the following command:
- - `python 1_l2xgnn_train.py --dataset={} --model={} --connected={} --ratio={}`
+ - `python 1_l2xgnn_train.py --dataset={} --model={} --connected={} --ratio={} --split={}`
 	 - `dataset`: choose between `ba_2motifs` and `Mutagenicity`.
 	 - `model`: this parameter can be used to choose whether we want to explain a GIN or a GCN architecture. You can choose between `L2XGIN` and `L2XGCN` respectively (default `L2XGIN`).
 	 - `connected`: parameter to decide between connected and disconnected subgraphs (default value `True`).
 	 - `ratio`: ratio of restrained edges (float between 0.1 and 0.9).
+	 - `split`: data split to evaluate (integer in the range [0,4]).
 ### Evaluate L2XGNN
 Once the explanations are obtained, we can compute the explanation accuracy in comparison with the available ground-truth motifs:
- - `python 2_l2xgnn_evaluate.py --dataset={} --model={} --connected={} --ratio={}`
+ - `python 2_l2xgnn_evaluate.py --dataset={} --model={} --connected={} --ratio={} --split={}`
 ### Plot explanations
 Finally, by running the next command, we can generate and save the images of the explanations learned by our method.
- - `python 3_plot_explanations.py --dataset={} --model={} --connected={} --ratio={}`
+ - `python 3_plot_explanations.py --dataset={} --model={} --connected={} --ratio={} --split={}`
  
  
 ## Reference
