@@ -86,7 +86,7 @@ for idx in range(len(edge_index_list)):
         pos = nx.kamada_kawai_layout(G)
         nx.draw_networkx_nodes(G, pos, node_color=colors,
                                edgecolors='black', linewidths=1.0)
-        nx.draw_networkx_edges(G, pos, edge_list, width=0.5, style='dashed')
+        nx.draw_networkx_edges(G, pos, edge_list, width=1.5 , alpha=0.1)
         nx.draw_networkx_edges(G, pos, sampled_edges, width=3, edge_color='black')
         # plt.title(f'{target}: {label}')
         plt.savefig(dir_plot+f'{name_dataset}_{name_model}_graph_{idx}.png', 
