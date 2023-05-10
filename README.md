@@ -17,7 +17,7 @@ The scripts are implemented with Python 3.9, and tested with Linux OS.
 The folder `benchmark_gc` contains the evaluation script for various methods on [common benchmark datasets](http://graphkernels.cs.tu-dortmund.de) via 10-fold cross validation, where a training fold is randomly sampled to serve as a validation set. We slightly modify the [evaluation protocol](https://github.com/pyg-team/pytorch_geometric/tree/master/benchmark/kernel) to work for our case.
 
 ### Base model hyperparameter selection
-Before training L2XGNN, we need to find the best configuration for each base models considered (i.e., GCN and GIN). Hyperparameter selection is performed for the number of hidden units [16, 32, 64, 128] and the number of layers [1, 2, 3, 4] with respect to the validation set. First, run the following command:
+Before training L2XGNN, we need to find the best configuration for each base model considered (i.e., GCN, GIN and GraphSAGE). Hyperparameter selection is performed for the number of hidden units [16, 32, 64, 128] and the number of layers [1, 2, 3, 4] with respect to the validation set. First, run the following command:
  - `python 1_backbone_selection.py`
 
 ### L2XGNN hyperparameter selection and evaluation
@@ -39,7 +39,8 @@ Once the perturbation intensity is decided, we can run the following command:
 The folder `xai_evaluation` contains the scripts to train, evaluate and plot the explanations obtained with our XAI method on a 3-layer GIN architecture.
 
 ### Datasets
-The folder `datasets` contains the raw data used for our experiments: `ba_2motifs` and `Mutagenicity (MUTAG_0)`. The first one can be directly obtained using commands from common [libraries](https://diveintographs.readthedocs.io/en/latest/xgraph/dataset.html#dig.xgraph.dataset.SynGraphDataset). The latter was manually downloaded from [this](https://github.com/chrisjtan/gnn_cff/tree/main/datasets/Mutagenicity_0) repository.
+The folder `datasets` contains the raw data used for our experiments: `ba_2motifs` and `Mutagenicity (MUTAG_0)`. The first one can be directly obtained using commands from common [libraries](https://diveintographs.readthedocs.io/en/latest/xgraph/dataset.html#dig.xgraph.dataset.SynGraphDataset). The latter was manually downloaded from [this](https://github.com/chrisjtan/gnn_cff/tree/main/datasets/Mutagenicity_0) repository. The subfolder `data_splits` contains the splits used for this experiment.
+
 Before training L2XGNN, we need to preprocess the `MUTAG_0` dataset using the following command:
  - `python 0_preprocess_Mutagenicity_data`
 
@@ -47,7 +48,7 @@ Before training L2XGNN, we need to preprocess the `MUTAG_0` dataset using the fo
 To train L2XGNN on a 3-layer GIN architecture (as in the paper), use the following command:
  - `python 1_l2xgnn_train.py --dataset={} --model={} --connected={} --ratio={} --split={}`
 	 - `dataset`: choose between `ba_2motifs` and `Mutagenicity`.
-	 - `model`: this parameter can be used to choose whether we want to explain a GIN or a GCN architecture. You can choose between `L2XGIN` and `L2XGCN` respectively (default `L2XGIN`).
+	 - `model`: this parameter can be used to choose whether we want to explain a GIN or a GCN architecture. You can choose between `L2XGIN`, `L2XGCN` and `L2XGSG` respectively (default `L2XGIN`).
 	 - `connected`: parameter to decide between connected and disconnected subgraphs (default value `True`).
 	 - `ratio`: ratio of restrained edges (float between 0.1 and 0.9).
 	 - `split`: data split to evaluate (integer in the range [0,4]).
