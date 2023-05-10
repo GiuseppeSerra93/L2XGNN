@@ -6,6 +6,7 @@ from datasets import get_dataset
 from diff_pool import DiffPool
 from gcn import GCN
 from gin import GIN
+from gsg import GraphSAGE
 from train_eval import cross_validation_with_val_set
 
 parser = argparse.ArgumentParser()
@@ -19,11 +20,11 @@ args = parser.parse_args()
 layers = [1, 2, 3, 4]
 hiddens = [16, 32, 64, 128]
 datasets = ['MUTAG',  'PROTEINS', 'IMDB-BINARY', 'IMDB-MULTI', 'DD', 'Yeast']
-datasets = ['MUTAG']
 
 nets = [
     GCN,
     GIN,
+    GraphSAGE,
 ]
 
 

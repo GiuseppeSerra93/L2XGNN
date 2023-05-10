@@ -5,6 +5,7 @@ from datasets import get_dataset
 from diff_pool import DiffPool
 from gcn import L2XGCN
 from gin import L2XGIN
+from gsg import L2XGSG
 from train_eval import cross_validation_with_val_set
 from custom.utils import parse_boolean
 
@@ -19,13 +20,13 @@ parser.add_argument('--connected', type=parse_boolean, default=True,
 args = parser.parse_args()
 
 datasets = ['MUTAG',  'PROTEINS', 'IMDB-BINARY', 'IMDB-MULTI', 'DD', 'Yeast']
-datasets = ['MUTAG']
 connected_flag = args.connected
 ratios = [0.4, 0.5, 0.6, 0.7]
 
 nets = [
     L2XGCN,
-    L2XGIN
+    L2XGIN,
+    L2XGSG
 ]
 
 def logger(info):
@@ -54,11 +55,13 @@ for dataset_name, Net in product(datasets, nets):
     best_result = (float('inf'), 0, 0)  # (loss, acc, std)
     print(f'--\n{dataset_name} - {Net.__name__}')
     name_model = Net.__name__[-3:]
+    if name_model == 'GSG':
+        name_model = 'GraphSAGE'
     num_layers, hidden = best_config_dict[f'{dataset_name}-{name_model}']
     print(f'Configuration - Layers: {num_layers} - Hidden: {hidden}')
     
     for ratio in ratios:
-        print(f'--\n{dataset_name} - {Net.__name__} - Ratio: {ratio}')
+        print(f'--\n{dataset_name} - {Net.__name__} - Ratio: {ratio} - Connected: {connected_flag}')
         ratio_str = str(ratio).replace('.', '')
         dataset = get_dataset(dataset_name, sparse=Net != DiffPool)
         model = Net(dataset, num_layers, hidden, connected_flag)
@@ -91,7 +94,7 @@ for dataset_name, Net in product(datasets, nets):
     print(f'Test result - {desc}')
     
     results += [f'{dataset_name} - {model}: {desc}']
-    best_ratio_dict[f'{dataset_name}-{model}'] = [num_layers, hidden, best_ratio]
+    best_ratio_dict[f'{dataset_name}-{model}_{connected_flag}'] = [num_layers, hidden, best_ratio]
         
     # save temporary results
     with open(best_ratio_fn, 'wb') as outfile:

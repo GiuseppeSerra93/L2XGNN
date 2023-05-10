@@ -5,6 +5,7 @@ from datasets import get_dataset
 from diff_pool import DiffPool
 from gcn import GCN, L2XGCN
 from gin import GIN, L2XGIN
+from gsg import GraphSAGE, L2XGSG
 from train_eval import cross_validation_with_val_set
 from custom.utils import parse_boolean
 
@@ -26,9 +27,12 @@ connected_flag = args.connected
 nets = [
     GCN,
     GIN,
+    GraphSAGE,
     L2XGCN,
-    L2XGIN
+    L2XGIN,
+    L2XGSG
 ]
+
 
 def logger(info):
     fold, epoch = info['fold'] + 1, info['epoch']
@@ -44,11 +48,12 @@ best_ratio_dict = pickle.load(open(best_ratio_fn, 'rb'))
 
 for dataset_name, Net in product(datasets, nets):
     best_result = (float('inf'), 0, 0)  # (loss, acc, std)
-    print(f'--\n{dataset_name} - {Net.__name__}')
+    print(f'--\n{dataset_name} - {Net.__name__} - Connected: {connected_flag}')
     dataset = get_dataset(dataset_name, sparse=Net != DiffPool)
     name_model = Net.__name__
-    if len(name_model) > 3:
-        num_layers, hidden, ratio = best_ratio_dict[f'{dataset_name}-{name_model}']
+    
+    if name_model.startswith('L2X'):
+        num_layers, hidden, ratio = best_ratio_dict[f'{dataset_name}-{name_model}_{connected_flag}'] 
         model = Net(dataset, num_layers, hidden, connected_flag)
     else:
         num_layers, hidden = best_config_dict[f'{dataset_name}-{name_model}']
