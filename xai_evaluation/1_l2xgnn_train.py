@@ -58,7 +58,7 @@ train_data = [dataset[idx] for idx in train_index]
 test_data = [dataset[idx] for idx in test_index]
 val_data = [dataset[idx] for idx in val_index]
 
-# hyperparameters should be changed accordingly to the original model we want to explain
+# hyperparameters should be changed according to the backbone model we want to explain
 if name_model == 'L2XGIN':
     num_epochs = 200
     n_layers = 3
