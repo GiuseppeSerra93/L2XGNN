@@ -5,6 +5,7 @@ import torch
 import argparse
 from gin import L2XGIN
 from gcn import L2XGCN
+from gsg import L2XGSG
 from torch_geometric.loader import DataLoader
 from custom.utils import load_dataset, create_split_idx, parse_boolean
 from custom.train_utils import training_proc, test, save_test_results, save_test_plotutils
@@ -14,7 +15,7 @@ parser.add_argument('--dataset', type=str,
                     choices=['ba_2motifs', 'Mutagenicity'],
                     help='Name of the dataset')
 parser.add_argument('--model', type=str,
-                    choices=['L2XGIN', 'L2XGCN'], default='L2XGIN',
+                    choices=['L2XGIN', 'L2XGCN', 'L2XGSG'], default='L2XGIN',
                     help='Name of the model')
 parser.add_argument('--connected', type=parse_boolean, default=False, 
                     help='Get connected output or not')
@@ -57,6 +58,7 @@ train_data = [dataset[idx] for idx in train_index]
 test_data = [dataset[idx] for idx in test_index]
 val_data = [dataset[idx] for idx in val_index]
 
+# hyperparameters should be changed accordingly to the original model we want to explain
 if name_model == 'L2XGIN':
     num_epochs = 200
     n_layers = 3
@@ -64,11 +66,18 @@ if name_model == 'L2XGIN':
     model = L2XGIN(num_features, hidden, num_classes, 
                         n_layers, connected_flag).to(device)
     
-else:
+if name_model == 'L2XGCN':
+    num_epochs = 200
+    n_layers = 3
+    hidden = 128
+    model = L2XGCN(num_features, hidden, num_classes, 
+                        n_layers, connected_flag).to(device)
+                        
+if name_model == 'L2XGSG':
     num_epochs = 200
     n_layers = 3
     hidden = 64
-    model = L2XGCN(num_features, hidden, num_classes, 
+    model = L2XGSG(num_features, hidden, num_classes, 
                         n_layers, connected_flag).to(device)
     
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

@@ -20,7 +20,7 @@ parser.add_argument('--dataset', type=str,
                     choices=['ba_2motifs', 'Mutagenicity'],
                     help='Name of the dataset')
 parser.add_argument('--model', type=str,
-                    choices=['L2XGIN', 'L2XGCN'], default='L2XGIN',
+                    choices=['L2XGIN', 'L2XGCN', 'L2XGSG'], default='L2XGIN',
                     help='Name of the model')
 parser.add_argument('--connected', type=parse_boolean, default=True, 
                     help='Get connected output or not')
