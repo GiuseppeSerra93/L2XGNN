@@ -19,9 +19,8 @@ parser.add_argument('--connected', type=parse_boolean, default=True,
                     help='Get connected output or not')
 parser.add_argument('--ratio', type=float,
                     help='Ratio of restrained edges')
-parser.add_argument('--split', type=int, default=0,
+parser.add_argument('--split', type=int, default=1,
                     help='Fold to evaluate {0-4}')
-
                     
 args = parser.parse_args()
 name_dataset = args.dataset
@@ -33,8 +32,10 @@ split = args.split
 ratio_str = str(ratio).replace('.', '')
 if connected_flag:
     connected_str = 'connected'
+    fn = f'{name_dataset}_{name_model}_graph_'
 else:
     connected_str = 'disconnected'
+    fn = f'{name_dataset}_{name_model}dis_graph_'
 
 dir_results = f'./results/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/s{split}/' 
 dir_plot = f'./explanation_plots/{name_dataset}/{connected_str}_{name_model}/{ratio_str}/s{split}/' 
@@ -52,8 +53,8 @@ y_true = pickle.load(open(dir_results + 'y_true_test.pkl', 'rb'))
 if name_dataset == 'Mutagenicity':
     mutag_dict = {0: 'C', 1: 'O', 2: 'Cl', 3: 'H', 4: 'N', 5: 'F', 6: 'Br', 7: 'S',
                       8: 'P', 9: 'I', 10: 'Na', 11: 'K', 12: 'Li', 13: 'Ca'}
-    colors_dict = {0: 'cornflowerblue', 1:'tomato', 2:'gold', 3:'lightgreen',
-                   4:'slateblue', 5:'thistle', 6:'teal', 7:'magenta', 8:'black'}
+    colors_dict = {0: 'black', 1:'red', 2:'limegreen', 3:'lightgrey',
+                   4:'blue', 5:'magenta', 6:'peru', 7:'darkkhaki', 8:'orange'}
     target = 'Mutagenicity'
 
 if name_dataset == 'ba_2motifs':
@@ -84,14 +85,16 @@ for idx in range(len(edge_index_list)):
         
         nx.set_node_attributes(G, dict_attr, name='attr')
         pos = nx.kamada_kawai_layout(G)
-        nx.draw_networkx_nodes(G, pos, node_color=colors,
-                               edgecolors='black', linewidths=1.0)
-        nx.draw_networkx_edges(G, pos, edge_list, width=1.5 , alpha=0.1)
-        nx.draw_networkx_edges(G, pos, sampled_edges, width=3, edge_color='black')
+        nx.draw_networkx_nodes(G, pos, node_color=colors, node_size=300, alpha=0.7,
+                               edgecolors=colors, linewidths=2.0)
+        nx.draw_networkx_edges(G, pos, edge_list, width=1.5 , alpha=0.1,
+                               arrows=True, arrowstyle='|-|', arrowsize=0)
+        nx.draw_networkx_edges(G, pos, sampled_edges, width=3, edge_color='black',
+                               arrows=True, arrowstyle='|-|', arrowsize=0)
         # plt.title(f'{target}: {label}')
-        plt.savefig(dir_plot+f'{name_dataset}_{name_model}_graph_{idx}.png', 
+        plt.savefig(dir_plot + fn + f'{idx}.png', 
                     format='png', dpi=200, transparent=False, bbox_inches='tight')
-        plt.savefig(dir_plot+f'{name_dataset}_{name_model}_graph_{idx}.pdf', 
+        plt.savefig(dir_plot + fn + f'{idx}.pdf', 
                     format='pdf', dpi=200, transparent=False, bbox_inches='tight')
         plt.close()
         
