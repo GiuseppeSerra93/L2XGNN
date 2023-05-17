@@ -48,8 +48,8 @@ Before training L2XGNN, we need to preprocess the `MUTAG_0` dataset using the fo
 To train L2XGNN on a 3-layer GIN architecture (as in the paper), use the following command:
  - `python 1_l2xgnn_train.py --dataset={} --model={} --connected={} --ratio={} --split={}`
 	 - `dataset`: choose between `ba_2motifs` and `Mutagenicity`.
-	 - `model`: this parameter can be used to choose whether we want to explain a GIN or a GCN architecture. You can choose between `L2XGIN`, `L2XGCN` and `L2XGSG` respectively (default `L2XGIN`).
-	 - `connected`: parameter to decide between connected and disconnected subgraphs (default value `False`).
+	 - `model`: base GNN model we want to explain. Architectures supported: GIN, GCN and GraphSAGE. You can choose between `L2XGIN`, `L2XGCN` and `L2XGSG` respectively (default `L2XGIN`).
+	 - `connected`: parameter to decide between connected and disconnected explanatory subgraphs (default value `False`).
 	 - `ratio`: ratio of restrained edges (float between 0.1 and 0.9).
 	 - `split`: data split to evaluate (integer in the range [0,4]).
 ### Evaluate L2XGNN
