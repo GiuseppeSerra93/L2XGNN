@@ -1,7 +1,7 @@
 # L2XGNN: Learning to Explain Graph Neural Networks
-The repository contains the code to reproduce the results of our [paper](https://arxiv.org/abs/2209.14402). The source code consists of two folders:
+The repository contains the code to reproduce the results of our [paper](https://link.springer.com/article/10.1007/s10994-024-06576-1). The source code consists of two folders:
 - `benchmark_gc` to reproduce the experiments related to graph classification tasks.
-- `xai_evaluation` to run, train and evaluate L2XGNN in comparison with common XAI post-hoc techniques.
+- `xai_evaluation` to run, train, and evaluate L2XGNN in comparison with common XAI post-hoc techniques.
 
 ### Requirements
 The scripts are implemented with Python 3.9, and tested with Linux OS.
@@ -14,7 +14,7 @@ The scripts are implemented with Python 3.9, and tested with Linux OS.
  - `matplotlib=3.5.1` 
 
 ## Graph Classification 
-The folder `benchmark_gc` contains the evaluation script for various methods on [common benchmark datasets](http://graphkernels.cs.tu-dortmund.de) via 10-fold cross validation, where a training fold is randomly sampled to serve as a validation set. We slightly modify the [evaluation protocol](https://github.com/pyg-team/pytorch_geometric/tree/master/benchmark/kernel) to work for our case.
+The folder `benchmark_gc` contains the evaluation script for various methods on [common benchmark datasets](http://graphkernels.cs.tu-dortmund.de) via 10-fold cross-validation, where a training fold is randomly sampled to serve as a validation set. We slightly modify the [evaluation protocol](https://github.com/pyg-team/pytorch_geometric/tree/master/benchmark/kernel) to work for our case.
 
 ### Base model hyperparameter selection
 Before training L2XGNN, we need to find the best configuration for each base model considered (i.e., GCN, GIN and GraphSAGE). Hyperparameter selection is performed for the number of hidden units [16, 32, 64, 128] and the number of layers [1, 2, 3, 4] with respect to the validation set. First, run the following command:
@@ -36,7 +36,7 @@ Once the perturbation intensity is decided, we can run the following command:
  - `python 3_main.py --connected={}`
 
 ## Explanation Evaluation
-The folder `xai_evaluation` contains the scripts to train, evaluate and plot the explanations obtained with our XAI method on a 3-layer GIN architecture.
+The folder `xai_evaluation` contains the scripts to train, evaluate, and plot the explanations obtained with our XAI method on a 3-layer GIN architecture.
 
 ### Datasets
 The folder `datasets` contains the raw data used for our experiments: `ba_2motifs` and `Mutagenicity (MUTAG_0)`. The first one can be directly obtained using commands from common [libraries](https://diveintographs.readthedocs.io/en/latest/xgraph/dataset.html#dig.xgraph.dataset.SynGraphDataset). The latter was manually downloaded from [this](https://github.com/chrisjtan/gnn_cff/tree/main/datasets/Mutagenicity_0) repository. The subfolder `data_splits` contains the splits used for this experiment.
@@ -48,7 +48,7 @@ Before training L2XGNN, we need to preprocess the `MUTAG_0` dataset using the fo
 To train L2XGNN on a 3-layer GIN architecture (as in the paper), use the following command:
  - `python 1_l2xgnn_train.py --dataset={} --model={} --connected={} --ratio={} --split={}`
 	 - `dataset`: choose between `ba_2motifs` and `Mutagenicity`.
-	 - `model`: base GNN model we want to explain. Architectures supported: GIN, GCN and GraphSAGE. You can choose between `L2XGIN`, `L2XGCN` and `L2XGSG` respectively (default `L2XGIN`).
+	 - `model`: base GNN model we want to explain. Architectures supported: GIN, GCN, and GraphSAGE. You can choose between `L2XGIN`, `L2XGCN`, and `L2XGSG` respectively (default `L2XGIN`).
 	 - `connected`: parameter to decide between connected and disconnected explanatory subgraphs (default value `False`).
 	 - `ratio`: ratio of restrained edges (float between 0.1 and 0.9).
 	 - `split`: data split to evaluate (integer in the range [0,4]).
@@ -64,11 +64,13 @@ Finally, by running the next command, we can generate and save the images of the
 
 ```bibtex
 
-@article{serra2022l2xgnn,
-  title={Learning to Explain Graph Neural Networks},
+@article{serra2024l2xgnn,
+  title={l2xgnn: learning to explain graph neural networks},
   author={Serra, Giuseppe and Niepert, Mathias},
-  journal={arXiv preprint arXiv:2209.14402},
-  year={2022}
+  journal={Machine Learning},
+  pages={1--23},
+  year={2024},
+  publisher={Springer}
 }
 
 ```
